@@ -9,7 +9,7 @@ const UAParser = require('ua-parser-js');
 const prisma = new PrismaClient();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5691;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -110,6 +110,20 @@ app.post('/collect', async (req, res) => {
     }
 });
 
+app.post('/websites', async (req, res ) => {
+    const { userId } = req.body;
+    try {
+        const websites = await prisma.website.findMany({
+            where: { userId: userId },
+        });
+        res.status(200).send({ message: "Websites fetched successfully", data: websites });
+    }
+    catch (error) {
+        console.error("Error in /websites endpoint:", error);
+        res.status(500).send({ message: "Internal Server Error", error: error.message });
+    }
+});
+
 app.post('/verify-domain', async (req, res) => {
     const { domain, siteId } = req.body;
 
@@ -125,8 +139,8 @@ app.post('/verify-domain', async (req, res) => {
         const htmlContent = response.data;
 
         // Check for the presence of the siteId in the script tag or meta tag
-        const regex = new RegExp(`siteId: '0440b253-8949-48ff-98c8-641d802eca4e'`, 'i'); // assuming siteId is placed as a string in a JavaScript variable
-        //const regex = new RegExp(`siteId="${siteId}"`, 'i'); // assuming siteId is placed as an attribute in a <script> or <meta> tag
+        //const regex = new RegExp(`siteId: '0440b253-8949-48ff-98c8-641d802eca4e'`, 'i'); // assuming siteId is placed as a string in a JavaScript variable
+        //const regex = new RegExp(`siteId='${siteId}'`, 'i'); // assuming siteId is placed as an attribute in a <script> or <meta> tag
         const isScriptPlaced = regex.test(htmlContent);
 
         if (isScriptPlaced) {
